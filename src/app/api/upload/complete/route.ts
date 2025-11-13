@@ -91,10 +91,11 @@ export async function POST(request: NextRequest) {
             eq(uploadedImageTable.id, uploadedImageId),
             eq(uploadedImageTable.status, 'pending')
           )
-        );
+        )
+        .returning();
 
       // Increment batch totalImages count only if status was actually updated
-      if (uploadUpdateResult.rowsAffected > 0) {
+      if (uploadUpdateResult.length > 0) {
         await db
           .update(batchTable)
           .set({

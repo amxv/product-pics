@@ -202,10 +202,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                   eq(generatedImageTable.id, generatedImage.id),
                   eq(generatedImageTable.status, 'processing')
                 )
-              );
+              )
+              .returning();
 
             // Only increment counter if status was actually updated
-            if (statusUpdateResult.rowsAffected > 0) {
+            if (statusUpdateResult.length > 0) {
               // Update runpod_job status
               await db
                 .update(runpodJobTable)
@@ -284,9 +285,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                     eq(generatedImageTable.id, generatedImage.id),
                     eq(generatedImageTable.status, 'processing')
                   )
-                );
+                )
+                .returning();
 
-              if (currentRetryCount + 1 >= 3 && retryUpdateResult.rowsAffected > 0) {
+              if (currentRetryCount + 1 >= 3 && retryUpdateResult.length > 0) {
                 // Update runpod_job status
                 await db
                   .update(runpodJobTable)
@@ -323,10 +325,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                     eq(generatedImageTable.id, generatedImage.id),
                     eq(generatedImageTable.status, 'processing')
                   )
-                );
+                )
+                .returning();
 
               // Only increment counter if status was actually updated
-              if (failedUpdateResult.rowsAffected > 0) {
+              if (failedUpdateResult.length > 0) {
                 await db
                   .update(runpodJobTable)
                   .set({
