@@ -6,7 +6,7 @@ import type {
   uploadedImageTable,
   generatedImageTable,
   runpodJobTable,
-} from '@/../../db/schema';
+} from '../../db/schema';
 
 // ===========================
 // Enums and Type Aliases
