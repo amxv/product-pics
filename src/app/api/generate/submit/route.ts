@@ -98,6 +98,10 @@ export async function POST(request: NextRequest) {
     const limit = pLimit(10); // Max 10 concurrent operations
     const jobPromises = uploadedImages.map((uploadedImage, index) =>
       limit(async () => {
+        // Pre-generate IDs and background for use in both success and error cases
+        const generatedImageId = nanoid();
+        const background = backgrounds[index];
+
         try {
           // 8a. Fetch image from R2
           const getCommand = new GetObjectCommand({
@@ -136,7 +140,6 @@ export async function POST(request: NextRequest) {
           const kidModelUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}${kidModelPath}`;
 
           // 8f. Generate prompt
-          const background = backgrounds[index];
           const prompt = generatePrompt(batch.demographic as Demographic, batch.ageRange, background);
 
           // 8g. Submit job to RunPod
@@ -148,7 +151,6 @@ export async function POST(request: NextRequest) {
           });
 
           // 8h. Create generated_image record
-          const generatedImageId = nanoid();
           await db.insert(generatedImageTable).values({
             id: generatedImageId,
             batchId: batch.id,
@@ -185,19 +187,42 @@ export async function POST(request: NextRequest) {
 
           return { success: true, jobId: runpodJobId };
         } catch (error) {
+          // Create failed record to track this failure
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+          await db.insert(generatedImageTable).values({
+            id: generatedImageId,
+            batchId: batch.id,
+            uploadedImageId: uploadedImage.id,
+            status: 'failed',
+            background,
+            runpodJobId: null,
+            retryCount: 0,
+            errorMessage: errorMessage,
+          });
+
           logError('Job submission failed', error, {
             batchId,
             uploadedImageId: uploadedImage.id,
+            generatedImageId,
+            background,
           });
-          throw error;
+
+          return { success: false, error: errorMessage };
         }
       })
     );
 
     // Wait for all jobs to be submitted
     const results = await Promise.allSettled(jobPromises);
-    const successfulJobs = results.filter(r => r.status === 'fulfilled').length;
-    const failedJobs = results.filter(r => r.status === 'rejected').length;
+
+    // Count successes and failures based on return value
+    const successfulJobs = results.filter(
+      r => r.status === 'fulfilled' && r.value.success
+    ).length;
+    const failedJobs = results.filter(
+      r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)
+    ).length;
 
     if (successfulJobs === 0) {
       logError('All jobs failed to submit', new Error('All RunPod job submissions failed'), {
