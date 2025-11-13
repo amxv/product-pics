@@ -58,11 +58,11 @@ export function BatchCard({ batch }: BatchCardProps) {
 
   return (
     <Link href={`/batches/${id}`}>
-      <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+      <Card className="p-6 cursor-pointer">
         <div className="space-y-3">
           {/* Demographic and age */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-foreground">
               {getDemographicLabel(demographic)}, {ageLabel}
             </h3>
           </div>
@@ -76,11 +76,11 @@ export function BatchCard({ batch }: BatchCardProps) {
 
           {/* Image counts */}
           {imageCountText && (
-            <p className="text-sm text-gray-600">{imageCountText}</p>
+            <p className="text-sm text-muted-foreground">{imageCountText}</p>
           )}
 
           {/* Created date */}
-          <p className="text-xs text-gray-500">{timeAgo}</p>
+          <p className="text-xs text-muted-foreground">{timeAgo}</p>
         </div>
       </Card>
     </Link>
