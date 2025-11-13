@@ -1,7 +1,7 @@
 import type { RunpodSubmitRequest, RunpodSubmitResponse, RunpodStatusResponse } from './types';
 
 // RunPod configuration
-const RUNPOD_ENDPOINT = 'https://api.runpod.ai/v2/seedream-v4-edit';
+const RUNPOD_ENDPOINT = 'https://api.runpod.ai/v2/nano-banana-edit';
 const RUNPOD_API_KEY = process.env.RUNPOD_API_KEY!;
 
 /**
