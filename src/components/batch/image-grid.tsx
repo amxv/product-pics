@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -83,10 +84,12 @@ export function ImageGrid({ images, onDelete, getImageUrl }: ImageGridProps) {
           <Card key={image.id} className="overflow-hidden">
             <div className="aspect-square bg-gray-100 relative">
               {imageUrl && !hasFailed ? (
-                <img
+                <Image
                   src={imageUrl}
                   alt={image.originalFilename}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  unoptimized
                   onError={() => {
                     setFailedImages((prev) => new Set(prev).add(image.id));
                   }}

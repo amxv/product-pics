@@ -5,20 +5,25 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { BatchStats } from '@/components/batch/batch-stats';
 import { UploadZone } from '@/components/batch/upload-zone';
 import { ImageGrid } from '@/components/batch/image-grid';
+import { StartGenerationButton } from '@/components/batch/start-generation-button';
+import { GenerationProgress } from '@/components/batch/generation-progress';
+import { GenerationStatus } from '@/components/batch/generation-status';
+import { ImageComparison } from '@/components/batch/image-comparison';
+import { RetryFailedButton } from '@/components/batch/retry-failed-button';
 import { updateBatchStatus, deleteBatch } from '@/actions/batch';
 import { ArrowLeft, Trash2, Check } from 'lucide-react';
-import type { Batch, UploadedImage } from '@/lib/types';
+import type { Batch, UploadedImage, GeneratedImage, BatchProgress } from '@/lib/types';
 
 interface BatchDetailsClientProps {
   batch: Batch;
   uploadedImages: UploadedImage[];
+  generatedImages: GeneratedImage[];
 }
 
-export function BatchDetailsClient({ batch, uploadedImages }: BatchDetailsClientProps) {
+export function BatchDetailsClient({ batch, uploadedImages, generatedImages }: BatchDetailsClientProps) {
   const router = useRouter();
   const [isMarkingReady, setIsMarkingReady] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -91,6 +96,16 @@ export function BatchDetailsClient({ batch, uploadedImages }: BatchDetailsClient
     ? `${batch.ageRange.split('-')[0]}-${batch.ageRange.split('-')[1]} years`
     : `${batch.ageRange} years`;
 
+  // Calculate progress for progress component
+  const initialProgress: BatchProgress = {
+    batchId: batch.id,
+    status: batch.status,
+    totalImages: batch.totalImages,
+    completedImages: batch.completedImages,
+    failedImages: batch.failedImages,
+    processingImages: generatedImages.filter(img => img.status === 'processing').length,
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
@@ -110,9 +125,7 @@ export function BatchDetailsClient({ batch, uploadedImages }: BatchDetailsClient
               {getDemographicLabel(batch.demographic)}, {ageLabel}
             </h1>
             <div className="flex items-center gap-2">
-              <Badge variant="default" className="capitalize">
-                {batch.status}
-              </Badge>
+              <GenerationStatus batch={batch} />
             </div>
           </div>
 
@@ -161,13 +174,141 @@ export function BatchDetailsClient({ batch, uploadedImages }: BatchDetailsClient
         </div>
       )}
 
-      {/* Uploaded images */}
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Uploaded Images ({uploadedImages.length})
-        </h2>
-        <ImageGrid images={uploadedImages} getImageUrl={getImageUrl} />
-      </div>
+      {/* Status-based UI */}
+      {batch.status === 'uploaded' && (
+        <div className="mb-8">
+          <Card className="p-6 bg-blue-50 border-blue-200">
+            <h3 className="text-lg font-semibold text-blue-900 mb-2">
+              Ready to Generate
+            </h3>
+            <p className="text-sm text-blue-700 mb-4">
+              Your images are uploaded and ready. Click the button below to start AI generation.
+            </p>
+            <StartGenerationButton batchId={batch.id} />
+          </Card>
+        </div>
+      )}
+
+      {batch.status === 'processing' && (
+        <div className="mb-8">
+          <GenerationProgress batchId={batch.id} initialProgress={initialProgress} />
+
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Image Comparisons
+            </h2>
+            <div className="space-y-4">
+              {uploadedImages.map((uploadedImage) => {
+                const generatedImage = generatedImages.find(
+                  (gen) => gen.uploadedImageId === uploadedImage.id
+                );
+                return (
+                  <ImageComparison
+                    key={uploadedImage.id}
+                    uploadedImage={uploadedImage}
+                    generatedImage={generatedImage || null}
+                    getImageUrl={getImageUrl}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {batch.status === 'completed' && (
+        <div className="mb-8">
+          <Card className="p-6 bg-green-50 border-green-200">
+            <h3 className="text-lg font-semibold text-green-900 mb-2">
+              Generation Complete!
+            </h3>
+            <p className="text-sm text-green-700 mb-4">
+              All {batch.completedImages} images have been generated successfully.
+            </p>
+          </Card>
+
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Generated Images
+            </h2>
+            <div className="space-y-4">
+              {uploadedImages.map((uploadedImage) => {
+                const generatedImage = generatedImages.find(
+                  (gen) => gen.uploadedImageId === uploadedImage.id
+                );
+                return (
+                  <ImageComparison
+                    key={uploadedImage.id}
+                    uploadedImage={uploadedImage}
+                    generatedImage={generatedImage || null}
+                    getImageUrl={getImageUrl}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {batch.status === 'partial' && (
+        <div className="mb-8">
+          <Card className="p-6 bg-orange-50 border-orange-200">
+            <h3 className="text-lg font-semibold text-orange-900 mb-2">
+              Generation Partially Complete
+            </h3>
+            <p className="text-sm text-orange-700 mb-4">
+              {batch.completedImages} image{batch.completedImages !== 1 ? 's' : ''} generated successfully,
+              but {batch.failedImages} image{batch.failedImages !== 1 ? 's' : ''} failed.
+            </p>
+            <RetryFailedButton batchId={batch.id} failedCount={batch.failedImages} />
+          </Card>
+
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Image Results
+            </h2>
+            <div className="space-y-4">
+              {uploadedImages.map((uploadedImage) => {
+                const generatedImage = generatedImages.find(
+                  (gen) => gen.uploadedImageId === uploadedImage.id
+                );
+                return (
+                  <ImageComparison
+                    key={uploadedImage.id}
+                    uploadedImage={uploadedImage}
+                    generatedImage={generatedImage || null}
+                    getImageUrl={getImageUrl}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {batch.status === 'failed' && (
+        <div className="mb-8">
+          <Card className="p-6 bg-red-50 border-red-200">
+            <h3 className="text-lg font-semibold text-red-900 mb-2">
+              Generation Failed
+            </h3>
+            <p className="text-sm text-red-700 mb-4">
+              All images failed to generate. Please try again.
+            </p>
+            <RetryFailedButton batchId={batch.id} failedCount={batch.failedImages} />
+          </Card>
+        </div>
+      )}
+
+      {/* Uploaded images (only show if status is uploading) */}
+      {batch.status === 'uploading' && (
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Uploaded Images ({uploadedImages.length})
+          </h2>
+          <ImageGrid images={uploadedImages} getImageUrl={getImageUrl} />
+        </div>
+      )}
     </div>
   );
 }

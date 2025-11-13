@@ -1,7 +1,7 @@
 import { redirect, notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
-import { db, batchTable, uploadedImageTable } from '../../../../../db';
+import { db, batchTable, uploadedImageTable, generatedImageTable } from '../../../../../db';
 import { eq } from 'drizzle-orm';
 import { BatchDetailsClient } from './batch-details-client';
 
@@ -54,10 +54,17 @@ export default async function BatchDetailsPage({ params }: BatchDetailsPageProps
     .from(uploadedImageTable)
     .where(eq(uploadedImageTable.batchId, batchId));
 
+  // Fetch all generated images for this batch
+  const generatedImages = await db
+    .select()
+    .from(generatedImageTable)
+    .where(eq(generatedImageTable.batchId, batchId));
+
   return (
     <BatchDetailsClient
       batch={batch}
       uploadedImages={uploadedImages}
+      generatedImages={generatedImages}
     />
   );
 }
