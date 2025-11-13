@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { db, batchTable, generatedImageTable, runpodJobTable, uploadedImageTable } from '../../../../../../db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { r2Client, R2_BUCKET_NAME, generateGeneratedKey } from '@/lib/r2';
 import { getJobStatus, downloadResult } from '@/lib/runpod';
@@ -209,11 +209,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
               })
               .where(eq(runpodJobTable.id, runpodJob.id));
 
-            // Increment batch completed count
+            // Increment batch completed count (atomic)
             await db
               .update(batchTable)
               .set({
-                completedImages: batch.completedImages + 1,
+                completedImages: sql`${batchTable.completedImages} + 1`,
               })
               .where(eq(batchTable.id, batchId));
 
@@ -283,11 +283,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                   })
                   .where(eq(runpodJobTable.id, runpodJob.id));
 
-                // Increment batch failed count
+                // Increment batch failed count (atomic)
                 await db
                   .update(batchTable)
                   .set({
-                    failedImages: batch.failedImages + 1,
+                    failedImages: sql`${batchTable.failedImages} + 1`,
                   })
                   .where(eq(batchTable.id, batchId));
 
@@ -315,11 +315,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 })
                 .where(eq(runpodJobTable.id, runpodJob.id));
 
-              // Increment batch failed count
+              // Increment batch failed count (atomic)
               await db
                 .update(batchTable)
                 .set({
-                  failedImages: batch.failedImages + 1,
+                  failedImages: sql`${batchTable.failedImages} + 1`,
                 })
                 .where(eq(batchTable.id, batchId));
 
