@@ -16,6 +16,13 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: false,
+    sendResetPassword: async () => {
+      // Disabled - use admin script to reset passwords
+    },
+  },
+  advanced: {
+    disableSignUp: true,
   },
   plugins: [
     username({
