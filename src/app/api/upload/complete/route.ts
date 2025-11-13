@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { db, uploadedImageTable, batchTable } from '../../../../../db';
-import { eq } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 // Request body schema
@@ -73,12 +73,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update uploaded_image status
+    // Check if already processed (idempotency)
+    if (uploadedImage.status !== 'pending') {
+      return NextResponse.json(
+        { success: true, message: 'Already processed' },
+        { status: 200 }
+      );
+    }
+
+    // Update uploaded_image status (only if still pending)
     if (success) {
       await db
         .update(uploadedImageTable)
         .set({ status: 'uploaded' })
-        .where(eq(uploadedImageTable.id, uploadedImageId));
+        .where(
+          and(
+            eq(uploadedImageTable.id, uploadedImageId),
+            eq(uploadedImageTable.status, 'pending')
+          )
+        );
+
+      // Increment batch totalImages count atomically (only if status was updated)
+      await db
+        .update(batchTable)
+        .set({
+          totalImages: sql`${batchTable.totalImages} + 1`,
+        })
+        .where(eq(batchTable.id, uploadedImage.batchId));
     } else {
       await db
         .update(uploadedImageTable)
@@ -86,17 +107,12 @@ export async function POST(request: NextRequest) {
           status: 'failed',
           errorMessage: errorMessage || 'Upload failed',
         })
-        .where(eq(uploadedImageTable.id, uploadedImageId));
-    }
-
-    // Update batch totalImages count (increment only on success)
-    if (success) {
-      await db
-        .update(batchTable)
-        .set({
-          totalImages: batch.totalImages + 1,
-        })
-        .where(eq(batchTable.id, uploadedImage.batchId));
+        .where(
+          and(
+            eq(uploadedImageTable.id, uploadedImageId),
+            eq(uploadedImageTable.status, 'pending')
+          )
+        );
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
