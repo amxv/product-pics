@@ -133,19 +133,18 @@ export async function POST(request: NextRequest) {
             expiresIn: 86400, // 24 hours
           });
 
-          // 8e. Get kid model image URL
-          // For MVP, use placeholder - would select based on demographic
-          const kidModelNumber = (index % 3) + 1;
-          const kidModelPath = `/models/${batch.demographic}-${kidModelNumber}.jpg`;
-          const kidModelUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}${kidModelPath}`;
+          // 8e. Generate prompt with variety index for diverse kid appearances
+          const prompt = generatePrompt(
+            batch.demographic as Demographic,
+            batch.ageRange,
+            background,
+            index // Use index to add variety to kid appearances
+          );
 
-          // 8f. Generate prompt
-          const prompt = generatePrompt(batch.demographic as Demographic, batch.ageRange, background);
-
-          // 8g. Submit job to RunPod
+          // 8f. Submit job to RunPod (only product image)
           const runpodJobId = await submitJob({
             prompt,
-            images: [kidModelUrl, tempImageUrl], // Kid model first, product second
+            images: [tempImageUrl], // Only the product image
             size: '1024*1024',
             enable_safety_checker: true,
           });

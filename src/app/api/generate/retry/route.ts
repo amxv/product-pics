@@ -141,22 +141,19 @@ export async function POST(request: NextRequest) {
             expiresIn: 86400, // 24 hours
           });
 
-          // Get kid model image URL
-          const kidModelNumber = Math.floor(Math.random() * 3) + 1;
-          const kidModelPath = `/models/${batch.demographic}-${kidModelNumber}.jpg`;
-          const kidModelUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}${kidModelPath}`;
-
-          // Generate new prompt (reuse same background)
+          // Generate new prompt (reuse same background) with random variety
+          const varietyIndex = Math.floor(Math.random() * 6); // 0-5 for variety
           const prompt = generatePrompt(
             batch.demographic as Demographic,
             batch.ageRange,
-            generatedImage.background! as Background
+            generatedImage.background! as Background,
+            varietyIndex
           );
 
-          // Submit new job to RunPod
+          // Submit new job to RunPod (only product image)
           const runpodJobId = await submitJob({
             prompt,
-            images: [kidModelUrl, tempImageUrl],
+            images: [tempImageUrl], // Only the product image
             size: '1024*1024',
             enable_safety_checker: true,
           });

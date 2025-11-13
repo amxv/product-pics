@@ -48,16 +48,34 @@ function getBackgroundDescription(background: Background): string {
 }
 
 /**
+ * Get variety descriptors for kid appearances
+ * Adds diversity to generated images based on index
+ */
+function getVarietyDescriptor(index: number): string {
+  const descriptors = [
+    'with diverse features',
+    'with warm smile',
+    'with cheerful expression',
+    'with natural pose',
+    'with authentic look',
+    'with bright eyes',
+  ];
+  return descriptors[index % descriptors.length];
+}
+
+/**
  * Generate prompt for Seedream 4 Edit model
- * Creates a detailed prompt based on demographic, age range, and background
+ * Creates a detailed prompt based on demographic, age range, background, and variety
  */
 export function generatePrompt(
   demographic: Demographic,
   ageRange: string,
-  background: Background
+  background: Background,
+  varietyIndex: number = 0
 ): string {
   const ageDescription = getAgeDescription(ageRange);
   const backgroundDescription = getBackgroundDescription(background);
+  const varietyDescriptor = getVarietyDescriptor(varietyIndex);
 
   // Format demographic for prompt
   const demographicLabel = demographic === 'baby' ? '' : demographic;
@@ -65,5 +83,5 @@ export function generatePrompt(
     ? `${ageDescription} ${demographicLabel} child`
     : ageDescription;
 
-  return `Place a ${childDescription} model from the first image wearing the clothing from the second image in ${backgroundDescription}. Photorealistic commercial product photography style. Natural lighting, ensure clothing details, colors, and textures are preserved exactly. The child should look happy and natural in the setting.`;
+  return `A ${childDescription} ${varietyDescriptor} wearing the clothing from the image in ${backgroundDescription}. Photorealistic commercial product photography style. Natural lighting, ensure clothing details, colors, and textures are preserved exactly. The child should look happy and natural in the setting.`;
 }

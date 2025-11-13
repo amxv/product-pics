@@ -265,10 +265,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 .limit(1);
 
               // Generate new prompt (reuse same background)
+              // Note: For retries, we use varietyIndex 0 as we don't store the original index
               const _prompt = generatePrompt(
                 freshBatch!.demographic as Demographic,
                 freshBatch!.ageRange,
-                generatedImage.background! as Background
+                generatedImage.background! as Background,
+                0
               );
 
               // TODO: Resubmit to RunPod (simplified for now - would need temp image URL again)
