@@ -189,7 +189,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             });
             await r2Client.send(putCommand);
 
-            // Update generated_image status
+            // Update generated_image status (only if still processing)
             await db
               .update(generatedImageTable)
               .set({
@@ -197,7 +197,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 r2Key: generatedKey,
                 completedAt: new Date(),
               })
-              .where(eq(generatedImageTable.id, generatedImage.id));
+              .where(
+                and(
+                  eq(generatedImageTable.id, generatedImage.id),
+                  eq(generatedImageTable.status, 'processing')
+                )
+              );
 
             // Update runpod_job status
             await db
@@ -263,7 +268,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
               );
 
               // TODO: Resubmit to RunPod (simplified for now - would need temp image URL again)
-              // For now, just increment retry count and mark as failed after 3 tries
+              // For now, just increment retry count and mark as failed after 3 tries (only if still processing)
               await db
                 .update(generatedImageTable)
                 .set({
@@ -271,7 +276,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                   status: currentRetryCount + 1 >= 3 ? 'failed' : 'processing',
                   errorMessage: currentRetryCount + 1 >= 3 ? statusResponse.error || 'Job failed after 3 retries' : null,
                 })
-                .where(eq(generatedImageTable.id, generatedImage.id));
+                .where(
+                  and(
+                    eq(generatedImageTable.id, generatedImage.id),
+                    eq(generatedImageTable.status, 'processing')
+                  )
+                );
 
               if (currentRetryCount + 1 >= 3) {
                 // Update runpod_job status
@@ -298,14 +308,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 });
               }
             } else {
-              // Already at max retries, mark as failed
+              // Already at max retries, mark as failed (only if still processing)
               await db
                 .update(generatedImageTable)
                 .set({
                   status: 'failed',
                   errorMessage: statusResponse.error || 'Job failed after 3 retries',
                 })
-                .where(eq(generatedImageTable.id, generatedImage.id));
+                .where(
+                  and(
+                    eq(generatedImageTable.id, generatedImage.id),
+                    eq(generatedImageTable.status, 'processing')
+                  )
+                );
 
               await db
                 .update(runpodJobTable)
