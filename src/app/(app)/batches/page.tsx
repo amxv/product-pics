@@ -28,7 +28,7 @@ export default async function BatchesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">My Batches</h1>
+        <h1 className="text-3xl font-bold text-foreground">My Batches</h1>
         <Link href="/batches/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />

@@ -72,7 +72,7 @@ export default function SignUpPage() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+            <div className="rounded-lg bg-destructive/10 dark:bg-destructive/20 p-3 text-sm text-destructive border border-destructive/20">
               {error}
             </div>
           )}
@@ -127,9 +127,9 @@ export default function SignUpPage() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Creating account..." : "Sign Up"}
           </Button>
-          <p className="text-sm text-center text-gray-600">
+          <p className="text-sm text-center text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/sign-in" className="text-primary hover:underline">
+            <Link href="/sign-in" className="text-primary hover:underline font-medium">
               Sign in
             </Link>
           </p>

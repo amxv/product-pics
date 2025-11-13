@@ -32,8 +32,8 @@ export function UserMenu({ user }: UserMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="flex items-center space-x-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200">
-            <span className="text-sm font-medium text-gray-700">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+            <span className="text-sm font-medium text-foreground">
               {user.name.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -44,7 +44,7 @@ export function UserMenu({ user }: UserMenuProps) {
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-gray-500">@{user.username || user.email}</p>
+            <p className="text-xs text-muted-foreground">@{user.username || user.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

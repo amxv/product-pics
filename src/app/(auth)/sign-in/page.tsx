@@ -51,7 +51,7 @@ export default function SignInPage() {
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+            <div className="rounded-lg bg-destructive/10 dark:bg-destructive/20 p-3 text-sm text-destructive border border-destructive/20">
               {error}
             </div>
           )}
@@ -82,9 +82,9 @@ export default function SignInPage() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Signing in..." : "Sign In"}
           </Button>
-          <p className="text-sm text-center text-gray-600">
+          <p className="text-sm text-center text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link href="/sign-up" className="text-primary hover:underline">
+            <Link href="/sign-up" className="text-primary hover:underline font-medium">
               Sign up
             </Link>
           </p>

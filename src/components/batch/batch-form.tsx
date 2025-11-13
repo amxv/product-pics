@@ -75,8 +75,8 @@ export function BatchForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-800">{error}</p>
+          <div className="rounded-lg bg-destructive/10 dark:bg-destructive/20 p-4 border border-destructive/20">
+            <p className="text-sm text-destructive">{error}</p>
           </div>
         )}
 
