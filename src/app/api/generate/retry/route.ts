@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { db, batchTable, uploadedImageTable, generatedImageTable, runpodJobTable } from '../../../../../db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { r2Client, R2_BUCKET_NAME } from '@/lib/r2';
@@ -199,12 +199,12 @@ export async function POST(request: NextRequest) {
     const successfulRetries = results.filter(r => r.status === 'fulfilled').length;
     const failedRetries = results.filter(r => r.status === 'rejected').length;
 
-    // 7. Update batch status to "processing"
+    // 7. Update batch status to "processing" (atomic decrement)
     await db
       .update(batchTable)
       .set({
         status: 'processing',
-        failedImages: batch.failedImages - successfulRetries,
+        failedImages: sql`${batchTable.failedImages} - ${successfulRetries}`,
         updatedAt: new Date(),
       })
       .where(eq(batchTable.id, batchId));
