@@ -23,7 +23,8 @@ export const userTable = pgTable('user', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   // Username plugin extension
-  username: text('username').notNull().unique(),
+  username: text('username').unique(),
+  displayUsername: text('display_username'),
 });
 
 export const sessionTable = pgTable('session', {
