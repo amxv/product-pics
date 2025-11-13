@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     // Update uploaded_image status (only if still pending)
     if (success) {
-      await db
+      const uploadUpdateResult = await db
         .update(uploadedImageTable)
         .set({ status: 'uploaded' })
         .where(
@@ -93,13 +93,15 @@ export async function POST(request: NextRequest) {
           )
         );
 
-      // Increment batch totalImages count atomically (only if status was updated)
-      await db
-        .update(batchTable)
-        .set({
-          totalImages: sql`${batchTable.totalImages} + 1`,
-        })
-        .where(eq(batchTable.id, uploadedImage.batchId));
+      // Increment batch totalImages count only if status was actually updated
+      if (uploadUpdateResult.rowsAffected > 0) {
+        await db
+          .update(batchTable)
+          .set({
+            totalImages: sql`${batchTable.totalImages} + 1`,
+          })
+          .where(eq(batchTable.id, uploadedImage.batchId));
+      }
     } else {
       await db
         .update(uploadedImageTable)

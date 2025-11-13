@@ -190,7 +190,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             await r2Client.send(putCommand);
 
             // Update generated_image status (only if still processing)
-            await db
+            const statusUpdateResult = await db
               .update(generatedImageTable)
               .set({
                 status: 'completed',
@@ -204,23 +204,26 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 )
               );
 
-            // Update runpod_job status
-            await db
-              .update(runpodJobTable)
-              .set({
-                status: 'completed',
-                resultUrl,
-                completedAt: new Date(),
-              })
-              .where(eq(runpodJobTable.id, runpodJob.id));
+            // Only increment counter if status was actually updated
+            if (statusUpdateResult.rowsAffected > 0) {
+              // Update runpod_job status
+              await db
+                .update(runpodJobTable)
+                .set({
+                  status: 'completed',
+                  resultUrl,
+                  completedAt: new Date(),
+                })
+                .where(eq(runpodJobTable.id, runpodJob.id));
 
-            // Increment batch completed count (atomic)
-            await db
-              .update(batchTable)
-              .set({
-                completedImages: sql`${batchTable.completedImages} + 1`,
-              })
-              .where(eq(batchTable.id, batchId));
+              // Increment batch completed count (atomic)
+              await db
+                .update(batchTable)
+                .set({
+                  completedImages: sql`${batchTable.completedImages} + 1`,
+                })
+                .where(eq(batchTable.id, batchId));
+            }
 
             logInfo('Job completed', `Image ${generatedImage.id} completed`, {
               batchId,
@@ -269,7 +272,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
               // TODO: Resubmit to RunPod (simplified for now - would need temp image URL again)
               // For now, just increment retry count and mark as failed after 3 tries (only if still processing)
-              await db
+              const retryUpdateResult = await db
                 .update(generatedImageTable)
                 .set({
                   retryCount: currentRetryCount + 1,
@@ -283,7 +286,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                   )
                 );
 
-              if (currentRetryCount + 1 >= 3) {
+              if (currentRetryCount + 1 >= 3 && retryUpdateResult.rowsAffected > 0) {
                 // Update runpod_job status
                 await db
                   .update(runpodJobTable)
@@ -309,7 +312,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
               }
             } else {
               // Already at max retries, mark as failed (only if still processing)
-              await db
+              const failedUpdateResult = await db
                 .update(generatedImageTable)
                 .set({
                   status: 'failed',
@@ -322,27 +325,30 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                   )
                 );
 
-              await db
-                .update(runpodJobTable)
-                .set({
-                  status: 'failed',
-                  errorMessage: statusResponse.error || 'Job failed',
-                })
-                .where(eq(runpodJobTable.id, runpodJob.id));
+              // Only increment counter if status was actually updated
+              if (failedUpdateResult.rowsAffected > 0) {
+                await db
+                  .update(runpodJobTable)
+                  .set({
+                    status: 'failed',
+                    errorMessage: statusResponse.error || 'Job failed',
+                  })
+                  .where(eq(runpodJobTable.id, runpodJob.id));
 
-              // Increment batch failed count (atomic)
-              await db
-                .update(batchTable)
-                .set({
-                  failedImages: sql`${batchTable.failedImages} + 1`,
-                })
-                .where(eq(batchTable.id, batchId));
+                // Increment batch failed count (atomic)
+                await db
+                  .update(batchTable)
+                  .set({
+                    failedImages: sql`${batchTable.failedImages} + 1`,
+                  })
+                  .where(eq(batchTable.id, batchId));
 
-              logError('Job failed permanently', new Error(statusResponse.error || 'Unknown error'), {
-                batchId,
-                generatedImageId: generatedImage.id,
-                retries: currentRetryCount,
-              });
+                logError('Job failed permanently', new Error(statusResponse.error || 'Unknown error'), {
+                  batchId,
+                  generatedImageId: generatedImage.id,
+                  retries: currentRetryCount,
+                });
+              }
             }
           }
         } catch (error) {
