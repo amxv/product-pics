@@ -99,3 +99,22 @@ export function logWarning(
     console.warn('Metadata:', JSON.stringify(metadata, null, 2));
   }
 }
+
+/**
+ * Log a download event for analytics and debugging
+ * @param batchId - The batch ID being downloaded
+ * @param userId - The user ID initiating the download
+ * @param imageCount - Number of images in the download
+ */
+export function logDownloadEvent(
+  batchId: string,
+  userId: string,
+  imageCount: number
+): void {
+  logInfo('Download Event', `User ${userId} downloaded batch ${batchId}`, {
+    batchId,
+    userId,
+    imageCount,
+    timestamp: new Date().toISOString(),
+  });
+}

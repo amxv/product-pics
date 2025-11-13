@@ -6,6 +6,10 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { BatchStats } from '@/components/batch/batch-stats';
+import { BatchSummary } from '@/components/batch/batch-summary';
+import { ErrorDisplay } from '@/components/batch/error-display';
+import { DownloadButton } from '@/components/batch/download-button';
+import { DeleteBatchDialog } from '@/components/batch/delete-batch-dialog';
 import { UploadZone } from '@/components/batch/upload-zone';
 import { ImageGrid } from '@/components/batch/image-grid';
 import { StartGenerationButton } from '@/components/batch/start-generation-button';
@@ -13,8 +17,9 @@ import { GenerationProgress } from '@/components/batch/generation-progress';
 import { GenerationStatus } from '@/components/batch/generation-status';
 import { ImageComparison } from '@/components/batch/image-comparison';
 import { RetryFailedButton } from '@/components/batch/retry-failed-button';
-import { updateBatchStatus, deleteBatch } from '@/actions/batch';
-import { ArrowLeft, Trash2, Check } from 'lucide-react';
+import { updateBatchStatus } from '@/actions/batch';
+import { ArrowLeft, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Batch, UploadedImage, GeneratedImage, BatchProgress } from '@/lib/types';
 
 interface BatchDetailsClientProps {
@@ -26,11 +31,12 @@ interface BatchDetailsClientProps {
 export function BatchDetailsClient({ batch, uploadedImages, generatedImages }: BatchDetailsClientProps) {
   const router = useRouter();
   const [isMarkingReady, setIsMarkingReady] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleMarkReady = async () => {
     if (uploadedImages.length === 0) {
-      alert('Please upload at least one image before marking as ready.');
+      toast.error('No images uploaded', {
+        description: 'Please upload at least one image before marking as ready.',
+      });
       return;
     }
 
@@ -40,38 +46,24 @@ export function BatchDetailsClient({ batch, uploadedImages, generatedImages }: B
       const result = await updateBatchStatus(batch.id, 'uploaded');
 
       if (result.success) {
+        toast.success('Batch marked as ready!', {
+          description: 'You can now start the generation process.',
+        });
         router.refresh();
       } else {
-        alert(result.error || 'Failed to mark batch as ready');
+        toast.error('Failed to mark batch as ready', {
+          description: result.error || 'Please try again.',
+        });
       }
     } catch {
-      alert('Failed to mark batch as ready');
+      toast.error('Failed to mark batch as ready', {
+        description: 'An unexpected error occurred. Please try again.',
+      });
     } finally {
       setIsMarkingReady(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this batch? This action cannot be undone.')) {
-      return;
-    }
-
-    setIsDeleting(true);
-
-    try {
-      const result = await deleteBatch(batch.id);
-
-      if (result.success) {
-        router.push('/batches');
-      } else {
-        alert(result.error || 'Failed to delete batch');
-        setIsDeleting(false);
-      }
-    } catch {
-      alert('Failed to delete batch');
-      setIsDeleting(false);
-    }
-  };
 
   const getImageUrl = async (r2Key: string): Promise<string> => {
     const response = await fetch('/api/images/view-url', {
@@ -129,15 +121,7 @@ export function BatchDetailsClient({ batch, uploadedImages, generatedImages }: B
             </div>
           </div>
 
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDelete}
-            disabled={isDeleting}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            {isDeleting ? 'Deleting...' : 'Delete Batch'}
-          </Button>
+          <DeleteBatchDialog batchId={batch.id} imageCount={uploadedImages.length} />
         </div>
       </Card>
 
@@ -218,14 +202,19 @@ export function BatchDetailsClient({ batch, uploadedImages, generatedImages }: B
 
       {batch.status === 'completed' && (
         <div className="mb-8">
-          <Card className="p-6 bg-green-50 border-green-200">
-            <h3 className="text-lg font-semibold text-green-900 mb-2">
-              Generation Complete!
-            </h3>
-            <p className="text-sm text-green-700 mb-4">
-              All {batch.completedImages} images have been generated successfully.
-            </p>
-          </Card>
+          <BatchSummary
+            batch={batch}
+            generatedImages={generatedImages}
+            uploadedImages={uploadedImages}
+          />
+
+          <div className="mt-6">
+            <DownloadButton
+              batchId={batch.id}
+              imageCount={batch.completedImages}
+              disabled={false}
+            />
+          </div>
 
           <div className="mt-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -252,16 +241,27 @@ export function BatchDetailsClient({ batch, uploadedImages, generatedImages }: B
 
       {batch.status === 'partial' && (
         <div className="mb-8">
-          <Card className="p-6 bg-orange-50 border-orange-200">
-            <h3 className="text-lg font-semibold text-orange-900 mb-2">
-              Generation Partially Complete
-            </h3>
-            <p className="text-sm text-orange-700 mb-4">
-              {batch.completedImages} image{batch.completedImages !== 1 ? 's' : ''} generated successfully,
-              but {batch.failedImages} image{batch.failedImages !== 1 ? 's' : ''} failed.
-            </p>
+          <BatchSummary
+            batch={batch}
+            generatedImages={generatedImages}
+            uploadedImages={uploadedImages}
+          />
+
+          <div className="mt-6">
+            <ErrorDisplay
+              failedImages={generatedImages.filter((img) => img.status === 'failed')}
+              uploadedImages={uploadedImages}
+            />
+          </div>
+
+          <div className="mt-6 flex gap-4">
+            <DownloadButton
+              batchId={batch.id}
+              imageCount={batch.completedImages}
+              disabled={batch.completedImages === 0}
+            />
             <RetryFailedButton batchId={batch.id} failedCount={batch.failedImages} />
-          </Card>
+          </div>
 
           <div className="mt-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -288,15 +288,27 @@ export function BatchDetailsClient({ batch, uploadedImages, generatedImages }: B
 
       {batch.status === 'failed' && (
         <div className="mb-8">
-          <Card className="p-6 bg-red-50 border-red-200">
-            <h3 className="text-lg font-semibold text-red-900 mb-2">
-              Generation Failed
-            </h3>
-            <p className="text-sm text-red-700 mb-4">
-              All images failed to generate. Please try again.
-            </p>
+          <BatchSummary
+            batch={batch}
+            generatedImages={generatedImages}
+            uploadedImages={uploadedImages}
+          />
+
+          <div className="mt-6">
+            <ErrorDisplay
+              failedImages={generatedImages.filter((img) => img.status === 'failed')}
+              uploadedImages={uploadedImages}
+            />
+          </div>
+
+          <div className="mt-6 flex gap-4">
+            <DownloadButton
+              batchId={batch.id}
+              imageCount={0}
+              disabled={true}
+            />
             <RetryFailedButton batchId={batch.id} failedCount={batch.failedImages} />
-          </Card>
+          </div>
         </div>
       )}
 
