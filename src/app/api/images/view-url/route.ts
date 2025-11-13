@@ -47,14 +47,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate presigned GET URL (15-minute expiry)
+    // Generate presigned GET URL (7-day expiry)
     const command = new GetObjectCommand({
       Bucket: R2_BUCKET_NAME,
       Key: r2Key,
     });
 
     const presignedUrl = await getSignedUrl(r2Client, command, {
-      expiresIn: 900, // 15 minutes
+      expiresIn: 604800, // 7 days
     });
 
     return NextResponse.json({ url: presignedUrl }, { status: 200 });
