@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { db, batchTable, uploadedImageTable, generatedImageTable, runpodJobTable } from '../../../../../db';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { r2Client, R2_BUCKET_NAME } from '@/lib/r2';
@@ -70,15 +70,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. Fetch all uploaded images for batch
-    const uploadedImages = await db
+    // 6. Fetch all images for batch to check status
+    const allImages = await db
       .select()
       .from(uploadedImageTable)
       .where(eq(uploadedImageTable.batchId, batchId));
 
+    // Filter for successfully uploaded images only
+    const uploadedImages = allImages.filter(img => img.status === 'uploaded');
+    const failedImages = allImages.filter(img => img.status === 'failed');
+    const pendingImages = allImages.filter(img => img.status === 'pending');
+
     if (uploadedImages.length === 0) {
+      const errorDetails = [];
+      if (pendingImages.length > 0) {
+        errorDetails.push(`${pendingImages.length} images still pending upload`);
+      }
+      if (failedImages.length > 0) {
+        errorDetails.push(`${failedImages.length} images failed to upload`);
+      }
+
+      const errorMessage = errorDetails.length > 0
+        ? `No successfully uploaded images found. ${errorDetails.join(', ')}.`
+        : 'No uploaded images found for this batch';
+
       return NextResponse.json(
-        { error: 'No uploaded images found for this batch' },
+        { error: errorMessage },
         { status: 400 }
       );
     }
@@ -86,6 +103,8 @@ export async function POST(request: NextRequest) {
     logInfo('Generation submit', `Starting generation for batch ${batchId}`, {
       batchId,
       imageCount: uploadedImages.length,
+      failedUploads: failedImages.length,
+      pendingUploads: pendingImages.length,
       demographic: batch.demographic,
       ageRange: batch.ageRange,
     });
@@ -108,6 +127,13 @@ export async function POST(request: NextRequest) {
             Bucket: R2_BUCKET_NAME,
             Key: uploadedImage.r2Key,
           });
+
+          logInfo('Fetching image from R2', `Fetching ${uploadedImage.r2Key}`, {
+            batchId,
+            uploadedImageId: uploadedImage.id,
+            r2Key: uploadedImage.r2Key,
+          });
+
           const s3Response = await r2Client.send(getCommand);
           const imageBuffer = Buffer.from(await s3Response.Body!.transformToByteArray());
 
@@ -205,6 +231,8 @@ export async function POST(request: NextRequest) {
             uploadedImageId: uploadedImage.id,
             generatedImageId,
             background,
+            r2Key: uploadedImage.r2Key,
+            uploadStatus: uploadedImage.status,
           });
 
           return { success: false, error: errorMessage };
