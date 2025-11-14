@@ -36,6 +36,7 @@ export const ERROR_MESSAGES = {
   // Validation errors
   INVALID_INPUT: 'Invalid input provided',
   BATCH_LIMIT_EXCEEDED: 'Batch size exceeds maximum of 100 images',
+  ACCOUNT_LIMIT_EXCEEDED: 'Account has reached the lifetime limit of 600 photos',
 
   // General errors
   INTERNAL_ERROR: 'An internal error occurred. Please try again later.',

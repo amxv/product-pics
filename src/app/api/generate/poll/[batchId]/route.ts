@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
-import { db, batchTable, generatedImageTable, runpodJobTable, uploadedImageTable } from '../../../../../../db';
+import { db, batchTable, generatedImageTable, runpodJobTable, uploadedImageTable, userTable } from '../../../../../../db';
 import { eq, and, sql } from 'drizzle-orm';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { r2Client, R2_BUCKET_NAME, generateGeneratedKey } from '@/lib/r2';
@@ -224,6 +224,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                   completedImages: sql`${batchTable.completedImages} + 1`,
                 })
                 .where(eq(batchTable.id, batchId));
+
+              // Increment user's total photos generated (atomic)
+              await db
+                .update(userTable)
+                .set({
+                  totalPhotosGenerated: sql`${userTable.totalPhotosGenerated} + 1`,
+                })
+                .where(eq(userTable.id, batch.userId));
             }
 
             logInfo('Job completed', `Image ${generatedImage.id} completed`, {

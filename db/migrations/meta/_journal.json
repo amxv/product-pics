@@ -15,6 +15,13 @@
       "when": 1763029722532,
       "tag": "0001_chilly_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763162157632,
+      "tag": "0002_nebulous_william_stryker",
+      "breakpoints": true
     }
   ]
 }

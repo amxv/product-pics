@@ -25,6 +25,9 @@ export const userTable = pgTable('user', {
   // Username plugin extension
   username: text('username').unique(),
   displayUsername: text('display_username'),
+  // Photo generation limits
+  totalPhotosGenerated: integer('total_photos_generated').notNull().default(0),
+  photoGenerationLimit: integer('photo_generation_limit').notNull().default(600),
 });
 
 export const sessionTable = pgTable('session', {

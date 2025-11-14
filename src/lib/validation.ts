@@ -4,7 +4,7 @@
  */
 
 import { createError, ERROR_MESSAGES } from './errors';
-import type { Batch, BatchStatus } from './types';
+import type { Batch, BatchStatus, User } from './types';
 
 // Type for the return value of auth.api.getSession()
 // This includes both session and user information
@@ -108,5 +108,34 @@ export function validateFileSize(
 export function validateBatchImageCount(count: number, maxCount: number = 100): void {
   if (count > maxCount) {
     throw createError.badRequest(ERROR_MESSAGES.BATCH_LIMIT_EXCEEDED);
+  }
+}
+
+/**
+ * Validate user has not exceeded lifetime photo generation limit
+ * @param user - The user object to check
+ * @throws AppError(403) if user has exceeded limit
+ */
+export function validateAccountPhotoLimit(user: User): void {
+  if (user.totalPhotosGenerated >= user.photoGenerationLimit) {
+    throw createError.forbidden(
+      `${ERROR_MESSAGES.ACCOUNT_LIMIT_EXCEEDED}. You have generated ${user.totalPhotosGenerated} out of ${user.photoGenerationLimit} allowed photos.`
+    );
+  }
+}
+
+/**
+ * Validate that generating N more photos won't exceed account limit
+ * @param user - The user object to check
+ * @param additionalPhotos - Number of photos to generate
+ * @throws AppError(403) if generating would exceed limit
+ */
+export function validateAccountPhotoCapacity(user: User, additionalPhotos: number): void {
+  const projectedTotal = user.totalPhotosGenerated + additionalPhotos;
+  if (projectedTotal > user.photoGenerationLimit) {
+    const remaining = user.photoGenerationLimit - user.totalPhotosGenerated;
+    throw createError.forbidden(
+      `Cannot generate ${additionalPhotos} photos. You have ${remaining} photos remaining out of your ${user.photoGenerationLimit} lifetime limit.`
+    );
   }
 }

@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { auth } from '@/lib/auth';
-import { db, batchTable, uploadedImageTable } from '../../../../../db';
+import { db, batchTable, uploadedImageTable, userTable } from '../../../../../db';
 import { r2Client, R2_BUCKET_NAME, generateUploadKey } from '@/lib/r2';
 import { presignedUrlRequestSchema, type PresignedUrlResponse } from '@/lib/types';
 import { eq, count } from 'drizzle-orm';
@@ -62,6 +62,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Batch is not in uploading state' },
         { status: 400 }
+      );
+    }
+
+    // Fetch user to check account limits
+    const [user] = await db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.id, session.user.id))
+      .limit(1);
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Check account-level photo limit
+    if (user.totalPhotosGenerated >= user.photoGenerationLimit) {
+      return NextResponse.json(
+        {
+          error: `Account has reached the lifetime limit of ${user.photoGenerationLimit} photos. You have generated ${user.totalPhotosGenerated} photos.`,
+          code: 'ACCOUNT_LIMIT_EXCEEDED',
+          details: {
+            limit: user.photoGenerationLimit,
+            used: user.totalPhotosGenerated,
+            remaining: 0
+          }
+        },
+        { status: 403 }
       );
     }
 

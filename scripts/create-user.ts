@@ -37,6 +37,11 @@ async function createUser(input: UserInput) {
     // Hash the password
     const hashedPassword = await hashPassword(password);
 
+    // Get photo limit from environment or use default
+    const photoLimit = process.env.PHOTO_LIMIT
+      ? parseInt(process.env.PHOTO_LIMIT)
+      : 600;
+
     // Create user
     await db.insert(userTable).values({
       id: userId,
@@ -45,6 +50,8 @@ async function createUser(input: UserInput) {
       emailVerified: true,
       username: finalUsername,
       displayUsername: finalUsername,
+      totalPhotosGenerated: 0,
+      photoGenerationLimit: photoLimit,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -66,10 +73,11 @@ async function createUser(input: UserInput) {
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('📝 Account Details');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('  Name:     ', name);
-    console.log('  Email:    ', email);
-    console.log('  Username: ', finalUsername);
-    console.log('  Password: ', password);
+    console.log('  Name:          ', name);
+    console.log('  Email:         ', email);
+    console.log('  Username:      ', finalUsername);
+    console.log('  Password:      ', password);
+    console.log('  Photo Limit:   ', photoLimit, 'photos');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('\n✅ You can now sign in at /sign-in\n');
 
