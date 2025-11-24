@@ -18,18 +18,18 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="border-b bg-white">
+    <div className="min-h-screen">
+      <nav className="border-b-2 border-black bg-white sticky top-0 z-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center">
-              <Link href="/batches" className="text-xl font-bold text-gray-900">
+            <div className="flex items-center gap-8">
+              <Link href="/batches" className="text-xl font-black uppercase tracking-tight text-black border-2 border-black bg-yellow-300 px-2 py-1 shadow-hard-sm -rotate-2 hover:rotate-0 transition-transform">
                 Product Pics
               </Link>
-              <div className="ml-10 flex items-baseline space-x-4">
+              <div className="hidden md:flex items-baseline space-x-4">
                 <Link
                   href="/batches"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  className="px-3 py-2 text-sm font-bold text-black hover:bg-black hover:text-white transition-colors border-2 border-transparent hover:border-black"
                 >
                   Batches
                 </Link>
@@ -39,7 +39,7 @@ export default async function AppLayout({
           </div>
         </div>
       </nav>
-      <main>{children}</main>
+      <main className="min-h-[calc(100vh-65px)]">{children}</main>
     </div>
   );
 }
