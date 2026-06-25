@@ -2,14 +2,14 @@
 
 ## Product Summary
 
-Product Pics is an AI product photo generator built for kids clothing catalogs. It takes flat product shots, places child models into the scene, and returns polished lifestyle-style images that are ready for ecommerce use.
+Product Pics is an AI product photo generator built for apparel catalogs. It takes flat product shots, places age-appropriate models into the scene, and returns polished lifestyle-style images that are ready for ecommerce use.
 
-The product is optimized for batch work rather than one-off editing. A store owner can upload up to 100 clothing images at once, choose a demographic and age range, and let the system generate a full set of catalog-ready outputs with varied natural backgrounds.
+The product is optimized for batch work rather than one-off editing. A store owner can upload up to 100 apparel images at once, choose a demographic and age range, and let the system generate a full set of catalog-ready outputs with varied natural backgrounds.
 
 ## Core Workflow
 
 1. Create a batch and choose:
-   - demographic: `baby`, `boy`, or `girl`
+   - demographic: `baby`, `boy`, `girl`, `man`, or `woman`
    - age: single age or age range such as `5-8`
 2. Upload product images directly to Cloudflare R2.
 3. The system converts uploads to PNG and submits generation jobs to RunPod.
@@ -21,7 +21,7 @@ The product is optimized for batch work rather than one-off editing. A store own
 - Batch upload up to 100 product images at a time.
 - Direct-to-R2 uploads using presigned URLs to avoid app-server upload bottlenecks.
 - AI generation through RunPod with polling-based async job tracking.
-- Demographic and age-based prompt construction for more relevant outputs.
+- Demographic and age-based prompt construction for more relevant outputs across kids and adult apparel.
 - Diverse background assignment across each batch.
 - Per-image retries for failed generations.
 - Downloadable zip export with generated images and a summary report.

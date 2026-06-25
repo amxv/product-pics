@@ -1,6 +1,6 @@
 # Product Pics
 
-Product Pics is an AI-powered product photo generator for kids clothing stores. It turns flat product shots into ecommerce-ready lifestyle images by placing child models into the scene with age-appropriate styling and varied natural backgrounds.
+Product Pics is an AI-powered product photo generator for apparel catalogs. It turns flat product shots into ecommerce-ready lifestyle images by placing age-appropriate models into the scene with varied natural backgrounds.
 
 The app is built for batch catalog work, not one-off image editing. Upload up to 100 product images, choose a demographic and age range, run generation asynchronously, and download the full results as a zip archive.
 
@@ -12,9 +12,9 @@ The app compares the original source image against the generated lifestyle resul
 
 ## What It Does
 
-- Generates product photos for kids clothing using AI.
+- Generates product photos for apparel catalogs using AI.
 - Supports batch uploads of up to 100 source images.
-- Lets users choose `baby`, `boy`, or `girl` demographics plus a single age or age range.
+- Lets users choose `baby`, `boy`, `girl`, `man`, or `woman` demographics plus a single age or age range.
 - Assigns diverse natural backgrounds across a batch for visual variety.
 - Tracks progress while generation jobs run asynchronously.
 - Packages completed outputs into a zip file with a summary report.
@@ -86,6 +86,7 @@ Open `http://localhost:3000`.
 - User signup is disabled in the current product flow; accounts are expected to be provisioned separately.
 - `tmp/` is intentionally gitignored for local scratch assets and experiments.
 - The app currently focuses on generation, tracking, and download workflows rather than interactive retouching.
+- The current UX is especially strong for apparel workflows where the source image needs to stay faithful to garment color, texture, and branding.
 
 ## License
 

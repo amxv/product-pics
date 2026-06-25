@@ -13,7 +13,7 @@ import type {
 // ===========================
 
 // Demographic types
-export const DEMOGRAPHICS = ['baby', 'boy', 'girl'] as const;
+export const DEMOGRAPHICS = ['baby', 'boy', 'girl', 'man', 'woman'] as const;
 export type Demographic = typeof DEMOGRAPHICS[number];
 
 // Batch status
@@ -159,16 +159,16 @@ export const ageRangeSchema = z.string().refine(
     // Single age: "5"
     if (/^\d+$/.test(val)) {
       const age = parseInt(val, 10);
-      return age >= 0 && age <= 18;
+      return age >= 0 && age <= 99;
     }
     // Age range: "5-8"
     if (/^\d+-\d+$/.test(val)) {
       const [min, max] = val.split('-').map(n => parseInt(n, 10));
-      return min >= 0 && max <= 18 && min <= max;
+      return min >= 0 && max <= 99 && min <= max;
     }
     return false;
   },
-  { message: 'Age must be 0-18 or a range like "5-8"' }
+  { message: 'Age must be 0-99 or a range like "5-8"' }
 );
 
 // Batch creation validation

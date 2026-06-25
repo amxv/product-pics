@@ -29,6 +29,8 @@ const DEMOGRAPHICS: { value: Demographic; label: string }[] = [
   { value: 'baby', label: 'Baby' },
   { value: 'boy', label: 'Boy' },
   { value: 'girl', label: 'Girl' },
+  { value: 'man', label: 'Man' },
+  { value: 'woman', label: 'Woman' },
 ];
 
 export function BatchForm() {
@@ -39,7 +41,7 @@ export function BatchForm() {
   const form = useForm<CreateBatchRequest>({
     resolver: zodResolver(createBatchSchema),
     defaultValues: {
-      demographic: 'boy',
+      demographic: 'woman',
       ageRange: '',
     },
   });
@@ -101,7 +103,7 @@ export function BatchForm() {
                 </SelectContent>
               </Select>
               <FormDescription>
-                Select the demographic for the model in generated photos
+                Select the model demographic for the generated product photos
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -116,13 +118,13 @@ export function BatchForm() {
               <FormLabel>Age Range</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="e.g., 5 or 5-8"
+                  placeholder="e.g., 5, 5-8, or 28-35"
                   {...field}
                   disabled={isLoading}
                 />
               </FormControl>
               <FormDescription>
-                Enter a single age (e.g., &quot;5&quot;) or range (e.g., &quot;5-8&quot;)
+                Enter a single age (for example &quot;5&quot; or &quot;28&quot;) or a range (for example &quot;5-8&quot; or &quot;28-35&quot;)
               </FormDescription>
               <FormMessage />
             </FormItem>

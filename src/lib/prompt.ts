@@ -16,7 +16,10 @@ function getAgeDescription(ageRange: string): string {
     if (avgAge <= 3) return 'toddler';
     if (avgAge <= 7) return 'young child';
     if (avgAge <= 12) return 'child';
-    return 'teenager';
+    if (avgAge <= 17) return 'teenager';
+    if (avgAge <= 29) return 'young adult';
+    if (avgAge <= 59) return 'adult';
+    return 'older adult';
   } else {
     // Single age
     const age = parseInt(ageRange, 10);
@@ -24,7 +27,10 @@ function getAgeDescription(ageRange: string): string {
     if (age <= 3) return 'toddler';
     if (age <= 7) return 'young child';
     if (age <= 12) return 'child';
-    return 'teenager';
+    if (age <= 17) return 'teenager';
+    if (age <= 29) return 'young adult';
+    if (age <= 59) return 'adult';
+    return 'older adult';
   }
 }
 
@@ -48,7 +54,7 @@ function getBackgroundDescription(background: Background): string {
 }
 
 /**
- * Get variety descriptors for kid appearances
+ * Get variety descriptors for model appearances
  * Adds diversity to generated images based on index
  */
 function getVarietyDescriptor(index: number): string {
@@ -61,6 +67,32 @@ function getVarietyDescriptor(index: number): string {
     'with bright eyes',
   ];
   return descriptors[index % descriptors.length];
+}
+
+function isAdultAge(ageDescription: string): boolean {
+  return (
+    ageDescription === 'young adult' ||
+    ageDescription === 'adult' ||
+    ageDescription === 'older adult'
+  );
+}
+
+function getModelDescription(
+  demographic: Demographic,
+  ageDescription: string
+): string {
+  switch (demographic) {
+    case 'baby':
+      return ageDescription === 'baby' ? 'baby' : `${ageDescription} baby`;
+    case 'boy':
+      return isAdultAge(ageDescription) ? `${ageDescription} man` : `${ageDescription} boy`;
+    case 'girl':
+      return isAdultAge(ageDescription) ? `${ageDescription} woman` : `${ageDescription} girl`;
+    case 'man':
+      return isAdultAge(ageDescription) ? `${ageDescription} man` : `${ageDescription} boy`;
+    case 'woman':
+      return isAdultAge(ageDescription) ? `${ageDescription} woman` : `${ageDescription} girl`;
+  }
 }
 
 /**
@@ -77,11 +109,7 @@ export function generatePrompt(
   const backgroundDescription = getBackgroundDescription(background);
   const varietyDescriptor = getVarietyDescriptor(varietyIndex);
 
-  // Format demographic for prompt
-  const demographicLabel = demographic === 'baby' ? '' : demographic;
-  const childDescription = demographicLabel
-    ? `${ageDescription} ${demographicLabel} child`
-    : ageDescription;
+  const modelDescription = getModelDescription(demographic, ageDescription);
 
-  return `A ${childDescription} ${varietyDescriptor} wearing the clothing from the image in ${backgroundDescription}. Photorealistic commercial product photography style. Natural lighting, ensure clothing details, colors, and textures are preserved exactly. The child should look happy and natural in the setting.`;
+  return `A ${modelDescription} ${varietyDescriptor} wearing the apparel item from the source image in ${backgroundDescription}. Photorealistic commercial ecommerce photography style. Natural lighting, keep the garment's design, colors, logos, fit, and textures faithful to the source image. The model should look natural, confident, and appropriate for the setting.`;
 }

@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Product Pics - AI Product Photo Generator",
-  description: "Generate professional product photos for kids clothing with AI",
+  description: "Generate professional ecommerce product photos for kids and adult apparel with AI",
 };
 
 export default function RootLayout({

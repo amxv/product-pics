@@ -6,8 +6,7 @@ export function middleware(request: NextRequest) {
 
   // Check if the request is for a protected route
   const isProtectedRoute = pathname.startsWith("/batches") ||
-                           pathname.startsWith("/batch/") ||
-                           (pathname === "/" && !pathname.startsWith("/sign-in") && !pathname.startsWith("/sign-up"));
+                           pathname.startsWith("/batch/");
 
   if (isProtectedRoute) {
     // Check for session cookie
