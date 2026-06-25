@@ -4,7 +4,7 @@ import { pgTable, text, timestamp, boolean, integer, pgEnum } from 'drizzle-orm/
 // Enums
 // ===========================
 
-export const demographicEnum = pgEnum('demographic', ['baby', 'boy', 'girl']);
+export const demographicEnum = pgEnum('demographic', ['baby', 'boy', 'girl', 'man', 'woman']);
 export const batchStatusEnum = pgEnum('batch_status', ['uploading', 'uploaded', 'processing', 'completed', 'partial', 'failed']);
 export const uploadStatusEnum = pgEnum('upload_status', ['pending', 'uploaded', 'failed']);
 export const generationStatusEnum = pgEnum('generation_status', ['pending', 'processing', 'completed', 'failed']);

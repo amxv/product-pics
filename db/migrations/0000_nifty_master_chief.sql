@@ -1,5 +1,5 @@
 CREATE TYPE "public"."batch_status" AS ENUM('uploading', 'uploaded', 'processing', 'completed', 'partial', 'failed');--> statement-breakpoint
-CREATE TYPE "public"."demographic" AS ENUM('baby', 'boy', 'girl');--> statement-breakpoint
+CREATE TYPE "public"."demographic" AS ENUM('baby', 'boy', 'girl', 'man', 'woman');--> statement-breakpoint
 CREATE TYPE "public"."generation_status" AS ENUM('pending', 'processing', 'completed', 'failed');--> statement-breakpoint
 CREATE TYPE "public"."runpod_job_status" AS ENUM('in_queue', 'in_progress', 'completed', 'failed');--> statement-breakpoint
 CREATE TYPE "public"."upload_status" AS ENUM('pending', 'uploaded', 'failed');--> statement-breakpoint

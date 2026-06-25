@@ -735,7 +735,9 @@
       "values": [
         "baby",
         "boy",
-        "girl"
+        "girl",
+        "man",
+        "woman"
       ]
     },
     "public.generation_status": {
